@@ -20,7 +20,7 @@
         android:id="@+id/edtEndpoint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="rtsp://"
+        android:text="rtsp://admin:we-cheers@10.89.33.25:554/h264/ch1/main/av_stream"
         android:hint="Endpoint" />
 
     <Button

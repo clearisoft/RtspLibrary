@@ -29,37 +29,12 @@ public class MainActivity extends Activity {
         ivPreview = (ImageView) findViewById(R.id.ivPreview);
         edtEndpoint = (EditText) findViewById(R.id.edtEndpoint);
 
-        rtspClient = new RtspClient(new NativeCallback() {
-            @Override
-            public void onFrame(final byte[] frame, final int nChannel, final int width, final int height) {
-//                Log.d(TAG, String.format("onFrame: nChannel = %d, width = %d, height = %d", nChannel, width, height));
-
-                ivPreview.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        int area = width * height;
-                        int pixels[] = new int[area];
-                        for (int i = 0; i < area; i++) {
-                            int r = frame[3 * i];
-                            int g = frame[3 * i + 1];
-                            int b = frame[3 * i + 2];
-                            if (r < 0) r += 255;
-                            if (g < 0) g += 255;
-                            if (b < 0) b += 255;
-                            pixels[i] = Color.rgb(r, g, b);
-                        }
-                        Bitmap bmp = Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
-                        ivPreview.setImageBitmap(bmp);
-                    }
-                });
-            }
-        });
+        rtspClient = new RtspClient();
     }
 
     @Override
     protected void onDestroy() {
         rtspClient.stop();
-        rtspClient.dispose();
         super.onDestroy();
     }
 
@@ -74,7 +49,31 @@ public class MainActivity extends Activity {
             @Override
             public void run() {
                 while (true) {
-                    if (rtspClient.play(endpoint) == 0)
+                    if (rtspClient.play(endpoint, new NativeCallback() {
+                        @Override
+                        public void onFrame(final byte[] frame, final int nChannel, final int width, final int height) {
+//                Log.d(TAG, String.format("onFrame: nChannel = %d, width = %d, height = %d", nChannel, width, height));
+
+                            ivPreview.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    int area = width * height;
+                                    int pixels[] = new int[area];
+                                    for (int i = 0; i < area; i++) {
+                                        int r = frame[3 * i];
+                                        int g = frame[3 * i + 1];
+                                        int b = frame[3 * i + 2];
+                                        if (r < 0) r += 255;
+                                        if (g < 0) g += 255;
+                                        if (b < 0) b += 255;
+                                        pixels[i] = Color.rgb(r, g, b);
+                                    }
+                                    Bitmap bmp = Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888);
+                                    ivPreview.setImageBitmap(bmp);
+                                }
+                            });
+                        }
+                    }) == 0)
                         break;
 
                     runOnUiThread(new Runnable() {
@@ -90,6 +89,13 @@ public class MainActivity extends Activity {
                         e.printStackTrace();
                     }
                 }
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "exit", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         }).start();
     }
